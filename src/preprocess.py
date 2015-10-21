@@ -4,7 +4,7 @@
 # output: 26 text files: a.txt, b.txt, c.txt, ... z.txt. Each
 # lists words that contain the corresponding character, which are also 
 # potentially 'valid' entries in the Lexathon game (with that particular
-# character at the center), i.e. no repeated characters, length b/w 4 and 9
+# character at the center), i.e. length b/w 4 and 9, lower-case only
 # By Yibo Yang
 
 import sys
@@ -30,9 +30,9 @@ def preprocess(wordlist):
     with open(wordlist, 'r') as words:
         for word in words:
             word=word.rstrip() # remove annoying newline at the end; word[:-1] doesn't always work b/c '\r\n' vs '\n' issue
-            print(word)
+            # print(word)
             if valid(word):
-                wordChars=set(word) # important to convert to set to avoid duplicates
+                wordChars=set(word) # important to convert to set to avoid duplicates; e.g. we don't want to write to g.txt twice the word "egg"
                 for char in wordChars: # append this word with appropriate handle;
                     foutList[ord(char)-97].write(word+'\n')
                         

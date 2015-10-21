@@ -1,2 +1,5 @@
+# C/C++ demo compiled on Linux
 src/demo_c
 src/demo_cpp
+# MIPS simulator
+src/Mars4_5.jar
