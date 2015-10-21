@@ -1,15 +1,15 @@
-Here's an overview of my implementation:
+#Here's an overview of my implementation of the prototype in C:
 
-Preprocessing:
+#Preprocessing:
 create file handles for a.txt, b.txt, ... z.txt
 for each entry in the bigass english dictionary:
-    if entry is not valid: continue;
-        create a set of chars in this entry
-            for each char in set:
-                    append this entry to the file handle corresponding to this char
+    if entry is not valid (length <4 or >9 or contains non lowercase char): continue;
+    create a set of chars in this entry
+        for each char in set:
+                append this entry to the file handle corresponding to this char
 
 
-The Game:
+#The Game:
 initialize two arrays, grid solutions array and user solutions array to null entries
 generate 9 random numbers in [0,25] (repetition allowed)
 get 9 corresponding letters and put them into an array
@@ -30,3 +30,12 @@ keep playing this round (prompt another input) or start a new round
 in the grid letters array; then for each word in the dictionary, I go through it character by character, decrementing
 the grid letter frequency array; if at any point I get a negative frequency, continue; else after going through the
 whole word, add it to the solutions array.
+
+
+#MIPS stuff
+Just added a basic file IO program to select custom dictionary to read; Mars seems to be pretty strict about memory;
+that is, the .space or .word thing for allocating memory is pretty limited. I tried to read the entire a.txt into a 
+giant buffer (.word 16384) and print the buffer, but only got around 100 lines printed. Looks like memory allocation
+is only allowed up to 0x100101e0. Obviously have to read line by line in Mars. Haven't tried SPIM.
+
+Forgive my bad markdown...Feel free to make suggestions...Check back for more updates...

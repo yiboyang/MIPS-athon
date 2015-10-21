@@ -2,7 +2,7 @@
 prompt:	.asciiz "Specify a file to read (enter one lower case letter, e.g. entering 'a' opens up a.txt in current directory): "
 fnf:	.ascii  "The file was not found: "
 file:	.asciiz	"?.txt"	# the "?" is just a placeholder for a char to be overwritten
-buffer: .space 1024
+buffer: .space 2048
  
 	.text
 
