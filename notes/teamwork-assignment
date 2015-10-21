@@ -1,0 +1,13 @@
+Milestones:
+acquiring dictionary file; (done)
+prototyping in high level language; (done)
+skeleton UI;
+individual parts;
+integration;
+testing/bug fixes
+
+Parts:
+Tim: scoring/timing/UI
+Yibo: prototyping/initialization/shutdown
+Shiva: word checking/etc
+Bradon: new round/random numbers
