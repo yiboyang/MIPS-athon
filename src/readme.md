@@ -33,9 +33,7 @@ whole word, add it to the solutions array.
 
 
 #MIPS stuff
-Just added a basic file IO program to select custom dictionary to read; Mars seems to be pretty strict about memory;
-that is, the .space or .word thing for allocating memory is pretty limited. I tried to read the entire a.txt into a 
-giant buffer (.word 16384) and print the buffer, but only got around 100 lines printed. Looks like memory allocation
-is only allowed up to 0x100101e0. Obviously have to read line by line in Mars. Haven't tried SPIM.
+Just added a basic file IO program to select any sub dictionary to read, all in one go (in Mars).
+Guess we won't need SPIM after all.
 
 Forgive my bad markdown...Feel free to make suggestions...Check back for more updates...

@@ -2,7 +2,7 @@
 prompt:	.asciiz "Specify a file to read (enter one lower case letter, e.g. entering 'a' opens up a.txt in current directory): "
 fnf:	.ascii  "The file was not found: "
 file:	.asciiz	"?.txt"	# the "?" is just a placeholder for a char to be overwritten
-buffer: .space 2048
+buffer: .space 524288	# the largest sub-dictionary, e.txt, is only 411621 bytes, so one can read any of them in one go
  
 	.text
 
@@ -32,7 +32,7 @@ read:
 	li	$v0, 14		# read file syscall
 	move	$a0, $s6	# load file descriptor
 	la	$a1, buffer	# load buffer address
-	li	$a2, 1024	# buffer size
+	li	$a2, 524288	# buffer size; tweak with it for fun
 	syscall
 	
 	li	$v0, 4		# for print string
