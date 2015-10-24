@@ -1,0 +1,27 @@
+User interface flow:
+
+session_prompt:	Prompt user for new session or exit
+		Get user input
+		if user input is exit, jump to exit
+		if user input is start new round, call to round subroutine
+		otherwise print error message and jump to session prompt
+
+round:		trigger generation of new board
+		reset game state (score and time)
+round_prompt:	call board display subroutine
+		call state display subroutine
+		prompt user for word
+		call word verification subroutine
+		if word is valid
+			call scoring subroutine
+			display success message
+		otherwise display error message
+		update game timer
+		if round isn't over jump to round_prompt
+		otherwise jump to round finish
+
+round_finish:	display user's final score
+		display all solutions
+		jump to session prompt
+
+exit:		exit from the application
