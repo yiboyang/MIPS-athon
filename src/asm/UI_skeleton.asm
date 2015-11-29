@@ -5,12 +5,12 @@ session_affirm:	.asciiz "start\n"
 session_deny:	.asciiz "exit\n"
 round_msg:	.asciiz "\nEnter another word: "
 round_err:	.asciiz "\nInvalid word: "
-exit_msg:	.asciiz "\nThanks for playing!"\
+exit_msg:	.asciiz "\nThanks for playing!"
 state_score:	.word 0
-state_started:	.word 0
-state_current:	.word 0
-state_board:	.bytes 0, 0, 0, 0, 0, 0, 0, 0, 0
-round_time:	.word 30
+state_start:	.word 0
+state_time:	.word 0
+state_board:	.byte 0, 0, 0, 0, 0, 0, 0, 0, 0
+round_time:	.word 300000 #milliseconds
 
 prompt_buf:	.byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
@@ -35,14 +35,14 @@ CompStr_LT:	li $v0, -1
 		jr $ra
 CompStr_GT:	li $v0, 1
 		jr $ra
-CompStr_EQ:	addi $t2, 1
-		bneq $t0, $0, CompStr_Loop
+CompStr_EQ:	addi $t2, $t2, 1
+		bne $t0, $0, CompStr_Loop
 		li $v0, 0
 		jr $ra
 
 ###
 # Prompt user for string input
-#
+# str@($a0) -> str@($v0)
 # Prints string ($a0) and places user input in ($v0). Does not allow user input
 # beyond 10 characters, and a newline will be appended unless the user inputs
 # 10 characters
@@ -53,6 +53,7 @@ Prompt:		li $v0, 4 # print string ($a0)
 		li $a1, 11
 		li $v0, 8 # read string to ($a0) of length <= $a1-1
 		syscall
+		move $v0, $a0
 		jr $ra
 
 ###
@@ -62,7 +63,7 @@ Prompt:		li $v0, 4 # print string ($a0)
 ###
 Session:	la $a0, session_msg
 		jal Prompt
-		mv $a0, $v0
+		move $a0, $v0
 		la $a1, session_affirm
 		jal CompStr
 		beq $v0, $0, InitRound
@@ -80,28 +81,27 @@ Exit:		la $a0, exit_msg
 		li $v0, 10
 		syscall
 
-InitRound:
-		jal InitState
+InitRound:	jal InitState
 		jal DspState
 		j Round
 
 Round:		la $a0, round_msg
 		jal Prompt
-		mv $a0, $v0
+		move $a0, $v0
 		jal ScoreWord
-		mv $t0, $v0
-		bneq $v0, $0, Round_Upd
+		move $t0, $v0
+		bne $v0, $0, Round_Upd
 		la $a0, round_err
 		li $v0, 4
 		syscall
-Round_Upd:	mv $a0, $t0
+Round_Upd:	move $a0, $t0
 		jal UpdateState
 		blt $v0, $0, EndRound
 		jal DspState
 		j Round
 
-EndRound:	jal DisplayResults
-		jal DisplaySolutions
+EndRound:	jal DspResult
+		jal DspSol
 		j Session
 
 ###
@@ -119,7 +119,7 @@ UpdateState:	la $t0, state_score
 		lw $t0, 0($t0)
 		li $v0, 30
 		syscall
-		sub $t0, $t0, $a0
+		sub $t0, $a0, $t0
 		la $t1, round_time
 		lw $t1, 0($t1)
 		sub $v0, $t1, $t0
@@ -132,7 +132,10 @@ UpdateState:	la $t0, state_score
 # none -> none
 # Assumes state_[score|start|time|board] exist
 ###
-InitState:	jal InitBoard
+InitState:	subi $sp, $sp, 4
+		sw $ra, 0($sp)
+
+		jal InitBoard
 
 		la $t0, state_score
 		sw $0, 0($t0)
@@ -144,6 +147,10 @@ InitState:	jal InitBoard
 		li $v0, 30
 		syscall
 		sw $a0, 0($t0)
+
+		lw $ra, 0($sp)
+		addi $sp, $sp, 4
+
 		jr $ra
 
 ###
@@ -152,9 +159,9 @@ InitState:	jal InitBoard
 # CURRENTLY STUB
 ###
 ScoreWord:	li $v0, 4
-		.text
-ScoreWord_tag:	.asciiz "<Stub Method Called> ScoreWord\n"
 		.data
+ScoreWord_tag:	.asciiz "<Stub Method Called> ScoreWord\n"
+		.text
 		la $a0, ScoreWord_tag
 		syscall
 		li $v0, 1
@@ -166,11 +173,11 @@ ScoreWord_tag:	.asciiz "<Stub Method Called> ScoreWord\n"
 # Assumes there is valid data at state_[board|score|time]
 ###
 DspState:	la $t0, state_board
-		.text
-DspState_BrdNL	.asciiz "\n	"
-DspState_Smsg	.asciiz "\nCurrent Score: "
-DspState_Tmsg	.asciiz "\nTime Remaining: "
 		.data
+DspState_BrdNL:	.asciiz "\n"
+DspState_Smsg:	.asciiz "\nCurrent Score: "
+DspState_Tmsg:	.asciiz "\nTime Remaining: "
+		.text
 		li $t1, 0
 		li $t2, 0
 		li $v0, 11
@@ -181,16 +188,16 @@ DspState_BrdLp: add $t4, $t0, $t1
 		syscall
 		addi $t1, $t1, 1
 		li $t5, 9
-		ble $t5, $t1, DspState_Sc
+		ble $t5, $t1, DspState_Score
 		addi $t2, $t2, 1
 		li $t5, 3
-		blt $t1, $t5, DspState_BL
+		blt $t2, $t5, DspState_BrdLp
 		li $t2, 0
 		li $v0, 4
 		la $a0, DspState_BrdNL
 		syscall
 		li $v0, 11
-		j DspState_BL
+		j DspState_BrdLp
 DspState_Score:	li $v0, 4
 		la $a0, DspState_Smsg
 		syscall
@@ -211,17 +218,18 @@ DspState_Score:	li $v0, 4
 # none -> none
 # CURRENTLY STUB
 ###
-		.text
-InitBoard_tag:	.asciiz "<Stub Method Called> InitBoard\n"
 		.data
+InitBoard_tag:	.asciiz "<Stub Method Called> InitBoard\n"
+		.text
 InitBoard:	li $v0, 4
 		la $a0, InitBoard_tag
 		syscall
 		la $t0, state_board
-		li $t1, 48
-		li $t2, 58
+		li $t1, 0
+		li $t2, 10
 InitBoard_iter:	add $t3, $t0, $t1
-		sb $t1, 0($t3)
+		addi $t4, $t1, 48
+		sb $t4, 0($t3)
 		addi $t1, $t1, 1
 		blt $t1, $t2, InitBoard_iter
 		jr $ra
@@ -247,9 +255,9 @@ DspResult:	li $v0, 4
 # none -> none
 # CURRENTLY STUB
 ###
-		.text
-DspSol_tag:	.asciiz "<Stub Method Called> DspSol\n"
 		.data
+DspSol_tag:	.asciiz "<Stub Method Called> DspSol\n"
+		.text
 DspSol:		li $v0, 4
 		la $a0, InitBoard_tag
 		syscall
