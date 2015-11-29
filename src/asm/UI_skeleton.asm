@@ -10,7 +10,7 @@ state_score:	.word 0
 state_started:	.word 0
 state_current:	.word 0
 state_board:	.bytes 0, 0, 0, 0, 0, 0, 0, 0, 0
-round_time:	.word 30
+round_time:	.word 30000
 
 prompt_buf:	.byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
@@ -61,70 +61,69 @@ Prompt:		li $v0, 4 # print string ($a0)
 # Not a subroutine!
 ###
 Session:	la $a0, session_msg
-		jal Prompt
+		jal Prompt			# Prompt for start or exit
 		mv $a0, $v0
 		la $a1, session_affirm
-		jal CompStr
-		beq $v0, $0, InitRound
+		jal CompStr			# Check is input is start
+		beq $v0, $0, InitRound		# if so, start the round
 		la $a1, session_deny
-		jal CompStr
-		beq $v0, $0, Exit
-		la $a0, session_err
+		jal CompStr			# else check for exit
+		beq $v0, $0, Exit		# if so, exit
+		la $a0, session_er
 		li $v0, 4
-		syscall
-		j Session
+		syscall				# else, print error
+		j Session			# and jump to input
 
 Exit:		la $a0, exit_msg
 		li $v0, 4
-		syscall
+		syscall				# Print exit message
 		li $v0, 10
-		syscall
+		syscall				# system exit
 
-InitRound:
-		jal InitState
+InitRound:	jal InitState
 		jal DspState
 		j Round
 
 Round:		la $a0, round_msg
-		jal Prompt
+		jal Prompt			# ask user for word
 		mv $a0, $v0
-		jal ScoreWord
-		mv $t0, $v0
-		bneq $v0, $0, Round_Upd
+		jal ScoreWord			# score the word
+		mv $t0, $v0			# temp save score
+		bneq $v0, $0, Round_Upd		# Check if score is 0
 		la $a0, round_err
 		li $v0, 4
-		syscall
+		syscall				# if so, print error
 Round_Upd:	mv $a0, $t0
-		jal UpdateState
-		blt $v0, $0, EndRound
-		jal DspState
-		j Round
+		jal UpdateState			# update the game state
+		blt $v0, $0, EndRound		# end if no time remaining
+		jal DspState			# else display updates stat
+		j Round				# and go back to user input
 
-EndRound:	jal DisplayResults
-		jal DisplaySolutions
+EndRound:	jal DisplayResults		# display the user's results
+		jal DisplaySolutions		# display all solutions
 		j Session
 
 ###
 # Updates the current state of the game
-# Points@$a0 -> none
+# Points@$a0 -> RemainingTime@$v0
 # The points passed to the method are directly awarded to the player
 ###
 UpdateState:	la $t0, state_score
-		lw $t1, 0($t0)
-		add $t1, $t1, $a0
-		sw $t1, 0($t0)
+		lw $t1, 0($t0)			# $t1 has player's score
+		add $t1, $t1, $a0		# add in new points
+		sw $t1, 0($t0)			# stone new score
 		# Score updated
 
 		la $t0, state_start
-		lw $t0, 0($t0)
+		lw $t0, 0($t0)			# $t0 has round start time
 		li $v0, 30
-		syscall
-		sub $t0, $t0, $a0
+		syscall				# get current time
+		sub $t0, $t0, $a0		# $t0 has elapsed time
 		la $t1, round_time
-		lw $t1, 0($t1)
-		sub $v0, $t1, $t0
-		la $t1, state_time
-		sw $v0, 0($t1)
+		lw $t1, 0($t1)			# $t1 has round time limit
+		sub $v0, $t1, $t0		# $vo has remaining time
+		la $t1, state_current
+		sw $v0, 0($t1)			# store remaining time in state
 		jr $ra
 
 ###
@@ -132,18 +131,22 @@ UpdateState:	la $t0, state_score
 # none -> none
 # Assumes state_[score|start|time|board] exist
 ###
-InitState:	jal InitBoard
+InitState:	addi $sp, $sp, 4
+		sw $ra, 0($sp)
+		jal InitBoard			# get a new board
 
 		la $t0, state_score
-		sw $0, 0($t0)
+		sw $0, 0($t0)			# Reset score to 0
 		la $t0, round_time
-		la $t1, state_time
+		la $t1, state_current
 		lw $t2, 0($t0)
-		sw $t2, 0($t1)
+		sw $t2, 0($t1)			# store total round time as remaining
 		la $t0, state_start
 		li $v0, 30
 		syscall
-		sw $a0, 0($t0)
+		sw $a0, 0($t0)			# get start time
+
+		lw $ra, 0($sp)
 		jr $ra
 
 ###
@@ -165,32 +168,32 @@ ScoreWord_tag:	.asciiz "<Stub Method Called> ScoreWord\n"
 # none -> none
 # Assumes there is valid data at state_[board|score|time]
 ###
-DspState:	la $t0, state_board
+DspState:	la $t0, state_board		# $t0 has board address
 		.text
-DspState_BrdNL	.asciiz "\n	"
-DspState_Smsg	.asciiz "\nCurrent Score: "
-DspState_Tmsg	.asciiz "\nTime Remaining: "
+DspState_BrdNL:	.asciiz "\n"
+DspState_Smsg:	.asciiz "\nCurrent Score: "
+DspState_Tmsg:	.asciiz "\nTime Remaining: "
 		.data
 		li $t1, 0
 		li $t2, 0
-		li $v0, 11
-DspState_BrdLp: add $t4, $t0, $t1
-		lb $a0, 0($t4)
-		syscall
+		li $v0, 11			# syscode for printchar
+DspState_BrdLp: add $t4, $t0, $t1		# $t4 has address into board array
+		lb $a0, 0($t4)			# $a0 has byte at $t4
+		syscall				# print char
 		li $a0, 32
-		syscall
-		addi $t1, $t1, 1
+		syscall				# print space
+		addi $t1, $t1, 1		# move to next collumn
 		li $t5, 9
-		ble $t5, $t1, DspState_Sc
+		ble $t5, $t1, DspState_Sc	# check if finished
 		addi $t2, $t2, 1
 		li $t5, 3
-		blt $t1, $t5, DspState_BL
+		blt $t1, $t5, DspState_BrdLp	# if collumn not large, jump to 
 		li $t2, 0
 		li $v0, 4
 		la $a0, DspState_BrdNL
 		syscall
 		li $v0, 11
-		j DspState_BL
+		j DspState_BrdLp
 DspState_Score:	li $v0, 4
 		la $a0, DspState_Smsg
 		syscall
@@ -202,7 +205,7 @@ DspState_Score:	li $v0, 4
 		la $a0, DspState_Tmsg
 		syscall
 		li $v0, 1
-		la $a0, state_time
+		la $a0, state_current
 		syscall
 		jr $ra
 
