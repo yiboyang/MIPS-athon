@@ -1,0 +1,80 @@
+	.data
+Map:	.space 26
+Result:	.space 9
+	.text
+main:
+	li $s0, 0
+	la $s1, Result
+FOR:			#get 9 letters
+	jal RNGALPHA		#get random letter
+	
+	add $a0, $v0, $zero
+	jal HASHALPHA		#hash letter
+	
+	add $t0, $s1, $s0	#store letter
+	sw $v0, ($t0)
+	
+	addi $s0, $s0, 4	#loop control
+	bne $s0, 36, FOR
+			#End for loop
+			
+	add $a0, $v0, 65	#put random letter in $a0
+	
+	li $v0, 11		#print random letter
+	syscall
+	
+	j END
+	
+RNG:
+	li $v0, 41		#get random number
+	syscall
+	srl $a0, $a0, 1 	#set within the signed positive range
+	
+	li $a1, 20		#set random number within range
+	li $a2, 40
+	sub $t0, $a2, $a1	#get range
+	
+	div $t1, $a0, $t0	#put number within range
+	mult $t1, $t0
+	mflo $t1
+	sub $t1, $a0, $t1
+	
+	add $v0, $t1, $a1	#add lower bound
+	
+	jr $ra
+	
+RNGALPHA:
+	li $v0, 41		#get random number
+	syscall
+	srl $a0, $a0, 26	#divide to within 0-31
+	
+	slti $t0, $a0, 26	#if the result is greater than 25, try again
+	beq $t0 $zero, RNGALPHA
+	
+	add $v0, $a0, $zero	#put random number in $v0
+	jr $ra
+	
+	
+	
+HASHALPHA:
+	la $t0, Map
+WHILE:
+	add $t1, $t0, $a0	#get current byte
+	lb $t2, ($t1)
+	beq $t2, $zero, VALID	#check if byte is used
+	
+	beq $a0, 26, WRAP	#check if needs to wrap back to 0
+	addi $a0, $a0, 1
+	j NO_WRAP
+WRAP:
+	sub $a0, $a0, 26
+NO_WRAP:	
+	j WHILE
+VALID:	
+	sb $t1, 1		#mark letter as used
+	add $v0, $a0, $zero	#final letter
+	
+	jr $ra
+	
+
+END:
