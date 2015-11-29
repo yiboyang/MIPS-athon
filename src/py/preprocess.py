@@ -2,10 +2,12 @@
 # preprocess('linux_words.txt'); (this is the one gigantic dictionary,
 # terminating in newline)
 # output: 26 text files: a.txt, b.txt, c.txt, ... z.txt. Each
-# lists words that contain the corresponding character, which are also 
+# lists words that contain the corresponding character, which are also
 # potentially 'valid' entries in the Lexathon game (with that particular
-# character at the center), i.e. length b/w 4 and 9, lower-case only
+# character at the center), i.e. length b/w 4 and 9, lower-case only, and no
+# repeated characters.
 # By Yibo Yang
+# Edit: Tim Hewitt
 
 import sys
 
@@ -25,7 +27,7 @@ def preprocess(wordlist):
         except IOError:
             print("Can't create output files")
             sys.exit(1)
-            
+
     # Now real processing
     with open(wordlist, 'r') as words:
         for word in words:
@@ -33,9 +35,10 @@ def preprocess(wordlist):
             # print(word)
             if valid(word):
                 wordChars=set(word) # important to convert to set to avoid duplicates; e.g. we don't want to write to g.txt twice the word "egg"
+                word = word.ljust(9, " ") # Consistent line size
                 for char in wordChars: # append this word with appropriate handle;
                     foutList[ord(char)-97].write(word+'\n')
-                        
+
     for fout in foutList:
         fout.close()
 
@@ -44,9 +47,15 @@ def preprocess(wordlist):
 def valid(string):
     if len(string)<minCharNum or len(string)>maxCharNum:
         return False
+    letters = set()
     for char in string:
         if (char<'a' or char>'z'):
             return False
+        if char in letters: # add in check for repeated characters.
+            return False
+        else:
+            letters.add(char)
+
     return True;
 
 
