@@ -7,8 +7,8 @@ round_msg:	.asciiz "\nEnter another word: "
 round_err:	.asciiz "\nInvalid word: "
 exit_msg:	.asciiz "\nThanks for playing!"
 state_score:	.word 0
-state_start:	.word 0
-state_current:	.word 0
+state_PrevTime:	.word 0
+state_RemTime:	.word 0
 state_board:	.byte 0, 0, 0, 0, 0, 0, 0, 0, 0
 round_time:	.word 30000
 
@@ -111,22 +111,31 @@ EndRound:	jal DspResult		# display the user's results
 # Points@$a0 -> RemainingTime@$v0
 # The points passed to the method are directly awarded to the player
 ###
-UpdateState:	la $t0, state_score
+UpdateState:	beq $a0, $0, UpdateState_ElapsedTime
+
+		la $t0, state_score
 		lw $t1, 0($t0)			# $t1 has player's score
 		add $t1, $t1, $a0		# add in new points
-		sw $t1, 0($t0)			# stone new score
+		sw $t1, 0($t0)			# store new score
 		# Score updated
 
-		la $t0, state_start
-		lw $t0, 0($t0)			# $t0 has round start time
+		la $t0, state_RemTime
+		lw $t1, 0($t0)
+		addi $t1, $t1, 20000
+		sw $t1, 0($t0)
+
+UpdateState_ElapsedTime:
+		la $t0, state_PrevTime
+		lw $t1, 0($t0)			# $t1 has previous update time
 		li $v0, 30
 		syscall				# get current time
-		sub $t0, $t0, $a0		# $t0 has elapsed time
-		la $t1, round_time
-		lw $t1, 0($t1)			# $t1 has round time limit
-		sub $v0, $t1, $t0		# $vo has remaining time
-		la $t1, state_current
-		sw $v0, 0($t1)			# store remaining time in state
+		sw $a0, 0($t0)			# save current update time
+		sub $t1, $a0, $t1		# $t1 has elapsed time since last update
+		la $t2, state_RemTime
+		lw $t3, 0($t2)			# $t2 has remaining time from previous update
+		sub $v0, $t3, $t1		# $v0 has new remaining time
+		sw $v0, 0($t2)
+
 		jr $ra
 
 ###
@@ -141,10 +150,10 @@ InitState:	addi $sp, $sp, 4
 		la $t0, state_score
 		sw $0, 0($t0)			# Reset score to 0
 		la $t0, round_time
-		la $t1, state_current
+		la $t1, state_RemTime
 		lw $t2, 0($t0)
 		sw $t2, 0($t1)			# store total round time as remaining
-		la $t0, state_start
+		la $t0, state_PrevTime
 		li $v0, 30
 		syscall
 		sw $a0, 0($t0)			# get start time
@@ -190,7 +199,7 @@ DspState_BrdLp: add $t4, $t0, $t1		# $t4 has address into board array
 		ble $t5, $t1, DspState_Score	# check if finished
 		addi $t2, $t2, 1
 		li $t5, 3
-		blt $t1, $t5, DspState_BrdLp	# if collumn not large, jump to 
+		blt $t1, $t5, DspState_BrdLp	# if collumn not large, jump to
 		li $t2, 0
 		li $v0, 4
 		la $a0, DspState_BrdNL
@@ -208,7 +217,8 @@ DspState_Score:	li $v0, 4
 		la $a0, DspState_Tmsg
 		syscall
 		li $v0, 1
-		la $a0, state_current
+		la $a0, state_RemTime
+		lw $a0, 0($a0)
 		syscall
 		jr $ra
 
@@ -234,31 +244,31 @@ InitBoard:	li $v0, 4
 		sb $t2, ($t3)
 		add $t1, $t1, 1
 		bne $t1, 26, Init_hash_map_for
-		
+
 
 		addi $sp, $sp, -4	#make room on stack
 		sw $ra, ($sp)
-		
+
 		li $t0, 0
 		la $t1, state_board
 	InitBoard_FOR:				#get 9 letters
 		jal InitBoard_RNG		#get random letter
-		
+
 		add $a0, $v0, $zero
 		jal InitBoard_HASH		#hash letter
-		
-		
+
+
 		add $t2, $t1, $t0	#store letter
 		sb $v0, ($t2)
-		
+
 		addi $t0, $t0, 1	#loop control
 		bne $t0, 9, InitBoard_FOR
 #End for loop
-			
+
 		lw $ra, ($sp)		#restore stack
 		addi $sp, $sp, 4
-	
-	
+
+
 		jr $ra
 
 
@@ -267,40 +277,40 @@ InitBoard:	li $v0, 4
 		li $v0, 41		#get random number
 		syscall
 		srl $a0, $a0, 26	#divide to within 0-31
-		
+
 		slti $t2, $a0, 26	#if the result is greater than 25, try again
 		beq $t2 $zero, InitBoard_RNG
-	
+
 		add $v0, $a0, $zero	#put random number in $v0
 		jr $ra
-	
-	
-	
+
+
+
 	InitBoard_HASH:
 		la $t2, Hash_Map
 	InitBoard_WHILE:
 		add $t3, $a0, $zero
 		add $t3, $t3, $t2	#get current byte
-		
+
 		lb $t4, ($t3)
 		beq $t4, $zero, InitBoard_VALID	#check if byte is used
-		
+
 		beq $a0, 26, InitBoard_WRAP	#check if needs to wrap back to 0
 		addi $a0, $a0, 1
 		j InitBoard_NO_WRAP
 	InitBoard_WRAP:
 		sub $a0, $a0, 26
-	InitBoard_NO_WRAP:	
+	InitBoard_NO_WRAP:
 		j InitBoard_WHILE
-	InitBoard_VALID:	
+	InitBoard_VALID:
 		li $t4, 1
 		sb $t4, ($t3)		#mark letter as used
 		addi $v0, $a0, 97	#final letter
-		
+
 		jr $ra
 
-		
-		
+
+
 ###
 # Display the final results after a round has completed
 # none -> none
@@ -330,4 +340,3 @@ DspSol:		li $v0, 4
 		la $a0, InitBoard_tag
 		syscall
 		jr $ra
-
