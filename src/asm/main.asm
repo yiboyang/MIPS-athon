@@ -5,14 +5,16 @@ session_affirm:	.asciiz "start\n"
 session_deny:	.asciiz "exit\n"
 round_msg:	.asciiz "\nEnter another word: "
 round_err:	.asciiz "\nInvalid word: "
-exit_msg:	.asciiz "\nThanks for playing!"\
+exit_msg:	.asciiz "\nThanks for playing!"
 state_score:	.word 0
-state_started:	.word 0
+state_start:	.word 0
 state_current:	.word 0
-state_board:	.bytes 0, 0, 0, 0, 0, 0, 0, 0, 0
+state_board:	.byte 0, 0, 0, 0, 0, 0, 0, 0, 0
 round_time:	.word 30000
 
 prompt_buf:	.byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+
+Hash_Map:	.space 26	#hash map of used letters
 
 		.align 4
 		.text
@@ -35,8 +37,8 @@ CompStr_LT:	li $v0, -1
 		jr $ra
 CompStr_GT:	li $v0, 1
 		jr $ra
-CompStr_EQ:	addi $t2, 1
-		bneq $t0, $0, CompStr_Loop
+CompStr_EQ:	addi $t2, $t2, 1#Braden
+		bne $t0, $0, CompStr_Loop
 		li $v0, 0
 		jr $ra
 
@@ -53,6 +55,7 @@ Prompt:		li $v0, 4 # print string ($a0)
 		li $a1, 11
 		li $v0, 8 # read string to ($a0) of length <= $a1-1
 		syscall
+		add $v0, $a0, $zero	#move string to $v0
 		jr $ra
 
 ###
@@ -62,14 +65,14 @@ Prompt:		li $v0, 4 # print string ($a0)
 ###
 Session:	la $a0, session_msg
 		jal Prompt			# Prompt for start or exit
-		mv $a0, $v0
+		move $a0, $v0#Braden
 		la $a1, session_affirm
 		jal CompStr			# Check is input is start
 		beq $v0, $0, InitRound		# if so, start the round
 		la $a1, session_deny
 		jal CompStr			# else check for exit
 		beq $v0, $0, Exit		# if so, exit
-		la $a0, session_er
+		la $a0, session_err
 		li $v0, 4
 		syscall				# else, print error
 		j Session			# and jump to input
@@ -86,21 +89,21 @@ InitRound:	jal InitState
 
 Round:		la $a0, round_msg
 		jal Prompt			# ask user for word
-		mv $a0, $v0
+		move $a0, $v0#Braden
 		jal ScoreWord			# score the word
-		mv $t0, $v0			# temp save score
-		bneq $v0, $0, Round_Upd		# Check if score is 0
+		move $t0, $v0			# temp save score
+		bne $v0, $0, Round_Upd		# Check if score is 0
 		la $a0, round_err
 		li $v0, 4
 		syscall				# if so, print error
-Round_Upd:	mv $a0, $t0
+Round_Upd:	move $a0, $t0
 		jal UpdateState			# update the game state
 		blt $v0, $0, EndRound		# end if no time remaining
 		jal DspState			# else display updates stat
 		j Round				# and go back to user input
 
-EndRound:	jal DisplayResults		# display the user's results
-		jal DisplaySolutions		# display all solutions
+EndRound:	jal DspResult		# display the user's results
+		jal DspSol		# display all solutions
 		j Session
 
 ###
@@ -155,9 +158,9 @@ InitState:	addi $sp, $sp, 4
 # CURRENTLY STUB
 ###
 ScoreWord:	li $v0, 4
-		.text
-ScoreWord_tag:	.asciiz "<Stub Method Called> ScoreWord\n"
 		.data
+ScoreWord_tag:	.asciiz "<Stub Method Called> ScoreWord\n"
+		.text
 		la $a0, ScoreWord_tag
 		syscall
 		li $v0, 1
@@ -169,11 +172,11 @@ ScoreWord_tag:	.asciiz "<Stub Method Called> ScoreWord\n"
 # Assumes there is valid data at state_[board|score|time]
 ###
 DspState:	la $t0, state_board		# $t0 has board address
-		.text
+		.data
 DspState_BrdNL:	.asciiz "\n"
 DspState_Smsg:	.asciiz "\nCurrent Score: "
 DspState_Tmsg:	.asciiz "\nTime Remaining: "
-		.data
+		.text
 		li $t1, 0
 		li $t2, 0
 		li $v0, 11			# syscode for printchar
@@ -184,7 +187,7 @@ DspState_BrdLp: add $t4, $t0, $t1		# $t4 has address into board array
 		syscall				# print space
 		addi $t1, $t1, 1		# move to next collumn
 		li $t5, 9
-		ble $t5, $t1, DspState_Sc	# check if finished
+		ble $t5, $t1, DspState_Score	# check if finished
 		addi $t2, $t2, 1
 		li $t5, 3
 		blt $t1, $t5, DspState_BrdLp	# if collumn not large, jump to 
@@ -216,7 +219,7 @@ DspState_Score:	li $v0, 4
 ###
 		.data
 InitBoard_tag:	.asciiz "<Stub Method Called> InitBoard\n"
-Hash_Map:	.space 26	#hash map of used letters
+
 
 		.text
 InitBoard:	li $v0, 4
@@ -225,15 +228,12 @@ InitBoard:	li $v0, 4
 
 		la $t0, Hash_Map	#initialize hash map
 		li $t1, 0
-		sb $t1, ($t0)
-		sb $t1, 1($t0)
-		sb $t1, 2($t0)
-		sb $t1, 3($t0)
-		sb $t1, 4($t0)
-		sb $t1, 5($t0)
-		sb $t1, 6($t0)
-		sb $t1, 7($t0)
-		sw $t1, 8($t0)
+		li $t2, 0
+	Init_hash_map_for:
+		add $t3, $t1, $t0
+		sb $t2, ($t3)
+		add $t1, $t1, 1
+		bne $t1, 26, Init_hash_map_for
 		
 
 		addi $sp, $sp, -4	#make room on stack
@@ -241,17 +241,18 @@ InitBoard:	li $v0, 4
 		
 		li $t0, 0
 		la $t1, state_board
-GEN_MATRIX_FOR:				#get 9 letters
-		jal RNGALPHA		#get random letter
+	InitBoard_FOR:				#get 9 letters
+		jal InitBoard_RNG		#get random letter
 		
 		add $a0, $v0, $zero
-		jal HASHALPHA		#hash letter
-	
+		jal InitBoard_HASH		#hash letter
+		
+		
 		add $t2, $t1, $t0	#store letter
 		sb $v0, ($t2)
 		
 		addi $t0, $t0, 4	#loop control
-		bne $t0, 36, GEN_MATRIX_FOR
+		bne $t0, 36, InitBoard_FOR
 #End for loop
 			
 		lw $ra, ($sp)		#restore stack
@@ -262,39 +263,39 @@ GEN_MATRIX_FOR:				#get 9 letters
 
 
 
-GEN_MATRIX_RNG:
+	InitBoard_RNG:
 		li $v0, 41		#get random number
 		syscall
 		srl $a0, $a0, 26	#divide to within 0-31
 		
 		slti $t2, $a0, 26	#if the result is greater than 25, try again
-		beq $t2 $zero, GEN_MATRIX_RNG
+		beq $t2 $zero, InitBoard_RNG
 	
 		add $v0, $a0, $zero	#put random number in $v0
 		jr $ra
 	
 	
 	
-GEN_MATRIX_HASH:
-		la $t2, Map
-GEN_MATRIX_WHILE:
+	InitBoard_HASH:
+		la $t2, Hash_Map
+	InitBoard_WHILE:
 		add $t3, $a0, $zero
 		add $t3, $t3, $t2	#get current byte
 		
 		lb $t4, ($t3)
-		beq $t4, $zero, GEN_MATRIX_VALID	#check if byte is used
+		beq $t4, $zero, InitBoard_VALID	#check if byte is used
 		
-		beq $a0, 26, GEN_MATRIX_WRAP	#check if needs to wrap back to 0
+		beq $a0, 26, InitBoard_WRAP	#check if needs to wrap back to 0
 		addi $a0, $a0, 1
-		j GEN_MATRIX_NO_WRAP
-GEN_MATRIX_WRAP:
+		j InitBoard_NO_WRAP
+	InitBoard_WRAP:
 		sub $a0, $a0, 26
-GEN_MATRIX_NO_WRAP:	
-		j GEN_MATRIX_WHILE
-GEN_MATRIX_VALID:	
+	InitBoard_NO_WRAP:	
+		j InitBoard_WHILE
+	InitBoard_VALID:	
 		li $t4, 1
 		sb $t4, ($t3)		#mark letter as used
-		add $v0, $a0, $zero	#final letter
+		addi $v0, $a0, 97	#final letter
 		
 		jr $ra
 
@@ -322,9 +323,9 @@ DspResult:	li $v0, 4
 # none -> none
 # CURRENTLY STUB
 ###
-		.text
-DspSol_tag:	.asciiz "<Stub Method Called> DspSol\n"
 		.data
+DspSol_tag:	.asciiz "<Stub Method Called> DspSol\n"
+		.text
 DspSol:		li $v0, 4
 		la $a0, InitBoard_tag
 		syscall
