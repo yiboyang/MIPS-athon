@@ -17,7 +17,7 @@ FOR_GEN:				#get 9 letters
 	jal HASHALPHA		#hash letter
 	
 	add $t2, $t1, $t0	#store letter
-	sw $v0, ($t2)
+	sb $v0, ($t2)
 	
 	addi $t0, $t0, 4	#loop control
 	bne $t0, 36, FOR_GEN
@@ -47,10 +47,10 @@ RNGALPHA:
 HASHALPHA:
 	la $t2, Map
 WHILE_HASH:
-	sll $t3, $a0, 2
+	add $t3, $a0, $zero
 	add $t3, $t3, $t2	#get current byte
 	
-	lw $t4, ($t3)
+	lb $t4, ($t3)
 	beq $t4, $zero, VALID_HASH	#check if byte is used
 	
 	beq $a0, 26, WRAP	#check if needs to wrap back to 0
@@ -62,7 +62,7 @@ NO_WRAP:
 	j WHILE_HASH
 VALID_HASH:	
 	li $t4, 1
-	sw $t4, ($t3)		#mark letter as used
+	sb $t4, ($t3)		#mark letter as used
 	add $v0, $a0, $zero	#final letter
 	
 	jr $ra
