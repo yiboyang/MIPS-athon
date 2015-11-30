@@ -1,7 +1,7 @@
 	.data
 	
-Map:	.space 104		#hash map
-Result:	.space 36		#letter matrix
+Map:	.space 26		#hash map
+state_board:	.bytes 0, 0, 0, 0, 0, 0, 0, 0, 0		#letter matrix
 
 	.text
 GEN_MATRIX:
@@ -9,7 +9,7 @@ GEN_MATRIX:
 	sw $ra, ($sp)
 	
 	li $t0, 0
-	la $t1, Result
+	la $t1, state_board
 FOR_GEN:				#get 9 letters
 	jal RNGALPHA		#get random letter
 	
