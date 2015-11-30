@@ -35,9 +35,9 @@ def preprocess(wordlist):
             # print(word)
             if valid(word):
                 wordChars=set(word) # important to convert to set to avoid duplicates; e.g. we don't want to write to g.txt twice the word "egg"
-                word = word.ljust(9, " ") # Consistent line size
+                word = word.ljust(9, '\0') # Consistent line size
                 for char in wordChars: # append this word with appropriate handle;
-                    foutList[ord(char)-97].write(word+'\n')
+                    foutList[ord(char)-97].write(word+'\0')
 
     for fout in foutList:
         fout.close()

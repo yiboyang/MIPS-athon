@@ -6,6 +6,7 @@ session_deny:	.asciiz "exit\n"
 round_msg:	.asciiz "\nEnter another word: "
 round_err:	.asciiz "\nInvalid word: "
 exit_msg:	.asciiz "\nThanks for playing!"
+exit_request:	.asciiz "idk\n"
 state_score:	.word 0
 state_PrevTime:	.word 0
 state_RemTime:	.word 0
@@ -90,6 +91,11 @@ InitRound:	jal InitState
 Round:		la $a0, round_msg
 		jal Prompt			# ask user for word
 		move $a0, $v0#Braden
+
+		la $a1, exit_request		#checks if user is exiting early
+		jal CompStr
+		beq $v0, $zero, End
+
 		jal ScoreWord			# score the word
 		move $t0, $v0			# temp save score
 		bne $v0, $0, Round_Upd		# Check if score is 0
@@ -199,7 +205,7 @@ DspState_BrdLp: add $t4, $t0, $t1		# $t4 has address into board array
 		ble $t5, $t1, DspState_Score	# check if finished
 		addi $t2, $t2, 1
 		li $t5, 3
-		blt $t1, $t5, DspState_BrdLp	# if collumn not large, jump to
+		blt $t2, $t5, DspState_BrdLp	# if collumn not large, jump to
 		li $t2, 0
 		li $v0, 4
 		la $a0, DspState_BrdNL
@@ -232,21 +238,21 @@ InitBoard_tag:	.asciiz "<Stub Method Called> InitBoard\n"
 
 
 		.text
-InitBoard:	li $v0, 4
-		la $a0, InitBoard_tag
-		syscall
+InitBoard:	#li $v0, 4
+		#la $a0, InitBoard_tag
+		#syscall
 
-		la $t0, Hash_Map	#initialize hash map
+		la $t0, Hash_Map		#initialize hash map
 		li $t1, 0
 		li $t2, 0
 	Init_hash_map_for:
 		add $t3, $t1, $t0
 		sb $t2, ($t3)
 		add $t1, $t1, 1
-		bne $t1, 26, Init_hash_map_for
+		bne $t1, 26, Init_hash_map_for 	#end for loop
 
 
-		addi $sp, $sp, -4	#make room on stack
+		addi $sp, $sp, -4		#make room on stack
 		sw $ra, ($sp)
 
 		li $t0, 0
@@ -256,16 +262,14 @@ InitBoard:	li $v0, 4
 
 		add $a0, $v0, $zero
 		jal InitBoard_HASH		#hash letter
-
-
-		add $t2, $t1, $t0	#store letter
+		add $t2, $t1, $t0		#store letter
 		sb $v0, ($t2)
 
-		addi $t0, $t0, 1	#loop control
+		addi $t0, $t0, 1		#loop control
 		bne $t0, 9, InitBoard_FOR
-#End for loop
+						#End for loop
 
-		lw $ra, ($sp)		#restore stack
+		lw $ra, ($sp)			#restore stack
 		addi $sp, $sp, 4
 
 
@@ -274,14 +278,14 @@ InitBoard:	li $v0, 4
 
 
 	InitBoard_RNG:
-		li $v0, 41		#get random number
+		li $v0, 41			#get random number
 		syscall
-		srl $a0, $a0, 26	#divide to within 0-31
+		srl $a0, $a0, 26		#divide to within 0-31
 
-		slti $t2, $a0, 26	#if the result is greater than 25, try again
+		slti $t2, $a0, 26		#if the result is greater than 25, try again
 		beq $t2 $zero, InitBoard_RNG
 
-		add $v0, $a0, $zero	#put random number in $v0
+		add $v0, $a0, $zero		#put random number in $v0
 		jr $ra
 
 
@@ -290,16 +294,15 @@ InitBoard:	li $v0, 4
 		la $t2, Hash_Map
 	InitBoard_WHILE:
 		add $t3, $a0, $zero
-		add $t3, $t3, $t2	#get current byte
+		add $t3, $t3, $t2		#get current byte
 
 		lb $t4, ($t3)
 		beq $t4, $zero, InitBoard_VALID	#check if byte is used
-
-		beq $a0, 26, InitBoard_WRAP	#check if needs to wrap back to 0
+		beq $a0, 25, InitBoard_WRAP	#check if needs to wrap back to 0
 		addi $a0, $a0, 1
 		j InitBoard_NO_WRAP
 	InitBoard_WRAP:
-		sub $a0, $a0, 26
+		li $a0, 0
 	InitBoard_NO_WRAP:
 		j InitBoard_WHILE
 	InitBoard_VALID:
