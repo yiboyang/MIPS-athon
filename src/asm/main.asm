@@ -190,7 +190,7 @@ DspState_BrdLp: add $t4, $t0, $t1		# $t4 has address into board array
 		ble $t5, $t1, DspState_Score	# check if finished
 		addi $t2, $t2, 1
 		li $t5, 3
-		blt $t1, $t5, DspState_BrdLp	# if collumn not large, jump to 
+		blt $t2, $t5, DspState_BrdLp	# if collumn not large, jump to 
 		li $t2, 0
 		li $v0, 4
 		la $a0, DspState_BrdNL
@@ -222,9 +222,9 @@ InitBoard_tag:	.asciiz "<Stub Method Called> InitBoard\n"
 
 
 		.text
-InitBoard:	li $v0, 4
-		la $a0, InitBoard_tag
-		syscall
+InitBoard:	#li $v0, 4
+		#la $a0, InitBoard_tag
+		#syscall
 
 		la $t0, Hash_Map	#initialize hash map
 		li $t1, 0
