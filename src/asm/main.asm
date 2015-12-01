@@ -251,8 +251,8 @@ InitBoard:	li $v0, 4
 		add $t2, $t1, $t0	#store letter
 		sb $v0, ($t2)
 		
-		addi $t0, $t0, 4	#loop control
-		bne $t0, 36, InitBoard_FOR
+		addi $t0, $t0, 1	#loop control
+		bne $t0, 9, InitBoard_FOR
 #End for loop
 			
 		lw $ra, ($sp)		#restore stack
