@@ -259,7 +259,7 @@ InitBoard:	#li $v0, 4
 		
 		addi $t0, $t0, 1	#loop control
 		bne $t0, 9, InitBoard_FOR
-#End for loop
+					#End for loop
 			
 		lw $ra, ($sp)		#restore stack
 		addi $sp, $sp, 4
@@ -291,7 +291,7 @@ InitBoard:	#li $v0, 4
 		lb $t4, ($t3)
 		beq $t4, $zero, InitBoard_VALID	#check if byte is used
 		
-		beq $a0, 26, InitBoard_WRAP	#check if needs to wrap back to 0
+		beq $a0, 25, InitBoard_WRAP	#check if needs to wrap back to 0
 		addi $a0, $a0, 1
 		j InitBoard_NO_WRAP
 	InitBoard_WRAP:
