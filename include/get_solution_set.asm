@@ -1,5 +1,14 @@
+# Input: length 9 array of grid characters; here we a static array from .data
+# Output: $a0 containing the address of the first char in the solution set (each entry has length 10 and will be null padded),
+# and $a1 containing the size of the solution set
+
+# Uses saved registers $s0 - $s3, which could be easily eliminated;
+# so far gives the same output as my Python demo program;
+# should work for grid/dictionary that allows duplicates as well.
+# By Yibo Yang
+	
 	.data
-grid:	.asciiz "abcdefghi"	# my test grid; uses e.txt as dictionary
+grid:	.asciiz "abjkedgci"	# my test grid
 gridChars:	.space 26		# boolean array keeping track of which chars are present in grid
 temp:	.space 26	# temporary copy of gridChars; reinitailized to gridChars each round
 buffer: .space 10	# use buffer size that is the size of an entry
@@ -94,7 +103,7 @@ done:	li	$v0, 16		# close file syscall
 	syscall
 	
 	la	$a0, solution	# copy solution set address
-	move	$t9, $a0	# copy number of solutions
+	move	$a1, $t9	# copy number of solutions
 	
 	li	$v0, 10		# exit syscall; optional
 	syscall
