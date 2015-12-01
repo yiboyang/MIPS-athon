@@ -232,17 +232,17 @@ InitBoard:	#li $v0, 4
 		#la $a0, InitBoard_tag
 		#syscall
 
-		la $t0, Hash_Map	#initialize hash map
+		la $t0, Hash_Map		#initialize hash map
 		li $t1, 0
 		li $t2, 0
 	Init_hash_map_for:
 		add $t3, $t1, $t0
 		sb $t2, ($t3)
 		add $t1, $t1, 1
-		bne $t1, 26, Init_hash_map_for
+		bne $t1, 26, Init_hash_map_for 	#end for loop
 		
 
-		addi $sp, $sp, -4	#make room on stack
+		addi $sp, $sp, -4		#make room on stack
 		sw $ra, ($sp)
 		
 		li $t0, 0
@@ -254,7 +254,7 @@ InitBoard:	#li $v0, 4
 		jal InitBoard_HASH		#hash letter
 		
 		
-		add $t2, $t1, $t0	#store letter
+		add $t2, $t1, $t0		#store letter
 		sb $v0, ($t2)
 		
 		addi $t0, $t0, 1	#loop control
@@ -274,7 +274,7 @@ InitBoard:	#li $v0, 4
 		syscall
 		srl $a0, $a0, 26	#divide to within 0-31
 		
-		slti $t2, $a0, 25	#if the result is greater than 25, try again
+		slti $t2, $a0, 26	#if the result is greater than 25, try again
 		beq $t2 $zero, InitBoard_RNG
 	
 		add $v0, $a0, $zero	#put random number in $v0
@@ -295,7 +295,7 @@ InitBoard:	#li $v0, 4
 		addi $a0, $a0, 1
 		j InitBoard_NO_WRAP
 	InitBoard_WRAP:
-		sub $a0, $a0, 26
+		li $a0, 0
 	InitBoard_NO_WRAP:	
 		j InitBoard_WHILE
 	InitBoard_VALID:	
