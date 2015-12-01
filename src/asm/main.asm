@@ -6,6 +6,7 @@ session_deny:	.asciiz "exit\n"
 round_msg:	.asciiz "\nEnter another word: "
 round_err:	.asciiz "\nInvalid word: "
 exit_msg:	.asciiz "\nThanks for playing!"
+exit_request:	.asciiz "idk\n"
 state_score:	.word 0
 state_start:	.word 0
 state_current:	.word 0
