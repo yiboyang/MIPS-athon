@@ -90,6 +90,11 @@ InitRound:	jal InitState
 Round:		la $a0, round_msg
 		jal Prompt			# ask user for word
 		move $a0, $v0#Braden
+		
+		la $a1, exit_request		#checks if user is exiting early
+		jal CompStr			
+		beq $v0, $zero, End
+		
 		jal ScoreWord			# score the word
 		move $t0, $v0			# temp save score
 		bne $v0, $0, Round_Upd		# Check if score is 0
@@ -268,7 +273,7 @@ InitBoard:	#li $v0, 4
 		syscall
 		srl $a0, $a0, 26	#divide to within 0-31
 		
-		slti $t2, $a0, 26	#if the result is greater than 25, try again
+		slti $t2, $a0, 25	#if the result is greater than 25, try again
 		beq $t2 $zero, InitBoard_RNG
 	
 		add $v0, $a0, $zero	#put random number in $v0
@@ -331,3 +336,4 @@ DspSol:		li $v0, 4
 		syscall
 		jr $ra
 
+End:
