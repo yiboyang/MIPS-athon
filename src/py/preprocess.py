@@ -40,6 +40,7 @@ def preprocess(wordlist):
                     foutList[ord(char)-97].write(word+'\0')
 
     for fout in foutList:
+        fout.write('\3') # append a "end-of-text" char to make dictionary reading easier
         fout.close()
 
 
