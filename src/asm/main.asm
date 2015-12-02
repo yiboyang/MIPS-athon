@@ -57,7 +57,7 @@ CompStr_EQ:	addi $t2, $t2, 1
 # beyond 10 characters, and a newline will be appended unless the user inputs
 # 10 characters
 ###
-Prompt:		li $v0, 			 # print string ($a0)
+Prompt:		li $v0, 4			 # print string ($a0)
 		syscall
 		la $a0, prompt_buf
 		li $a1, 11
@@ -453,6 +453,6 @@ FindSol:			#find solutions
 		la	$a0, solution		# copy solution set address
 		
 		la 	$t0, numSol		#added by braden to store the number of solutions in memory and return
-		sw	$t9, (t0)
+		sw	$t9, 0($t0)
 		jr $ra
 
