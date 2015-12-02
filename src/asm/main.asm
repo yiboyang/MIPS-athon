@@ -15,9 +15,11 @@ round_time:	.word 30000
 
 sol_gridChars:	.space 26		# boolean array keeping track of which chars are present in grid
 sol_temp:	.space 26	# sol_temporary copy of sol_gridChars; reinitailized to sol_gridChars each round
-sol_buffer: .space 10	# use sol_buffer size that is the size of an entry
+sol_buffer: 	.space 10	# use sol_buffer size that is the size of an entry
 sol_file:	.asciiz	"?.txt"	# the "?" is just a placeholder for a char to be overwritten
 sol_solution: .space 3000	# assume max 300 solution entries (each has length 10 including null char)
+sol_num:	.word 0
+
 
 prompt_buf:	.byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
@@ -436,7 +438,10 @@ solDone:	li	$v0, 16		# close sol_file syscall
 		move	$a0, $t6	# load sol_file descriptor
 		syscall
 
-		la	$a0, sol_solution	# copy solution set address
-		move	$a1, $t9	# copy number of solutions
+		la	$a0, solution	# copy solution set address
+		la 	$t0, sol_num	# store number of solutions
+		sw	$t9, ($t0)
+		#move	$a1, $t9	# copy number of solutions
+
 
 		jr $ra
