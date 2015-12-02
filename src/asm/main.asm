@@ -94,7 +94,7 @@ Round:		la $a0, round_msg
 
 		la $a1, exit_request		#checks if user is exiting early
 		jal CompStr
-		beq $v0, $zero, End
+		beq $v0, $zero, EndRound
 
 		jal ScoreWord			# score the word
 		move $t0, $v0			# temp save score
@@ -340,6 +340,6 @@ DspResult:	li $v0, 4
 DspSol_tag:	.asciiz "<Stub Method Called> DspSol\n"
 		.text
 DspSol:		li $v0, 4
-		la $a0, InitBoard_tag
+		la $a0, DspSol_tag
 		syscall
 		jr $ra
