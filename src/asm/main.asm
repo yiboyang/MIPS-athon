@@ -13,12 +13,11 @@ state_RemTime:	.word 0
 state_board:	.byte 0, 0, 0, 0, 0, 0, 0, 0, 0
 round_time:	.word 30000
 
-gridChars:	.space 26			# boolean array keeping track of which chars are present in grid
-temp:		.space 26			# temporary copy of gridChars; reinitailized to gridChars each round
-buffer: 	.space 10			# use buffer size that is the size of an entry
-file:		.asciiz	"?.txt"			# the "?" is just a placeholder for a char to be overwritten
-solution:	.space 3000			# assume max 300 solution entries (each has length 10 including null char)
-numSol:		.word 0
+sol_gridChars:	.space 26		# boolean array keeping track of which chars are present in grid
+sol_temp:	.space 26	# sol_temporary copy of sol_gridChars; reinitailized to sol_gridChars each round
+sol_buffer: .space 10	# use sol_buffer size that is the size of an entry
+sol_file:	.asciiz	"?.txt"	# the "?" is just a placeholder for a char to be overwritten
+solution: .space 3000	# assume max 300 solution entries (each has length 10 including null char)
 
 prompt_buf:	.byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
@@ -104,7 +103,7 @@ Round:		la $a0, round_msg
 		beq $v0, $zero, EndRound
 
 		jal ScoreWord			# score the word
-		move $t0, $v0			# temp save score
+		move $t0, $v0			# sol_temp save score
 		bne $v0, $0, Round_Upd		# Check if score is 0
 		la $a0, round_err
 		li $v0, 4
@@ -159,7 +158,7 @@ UpdateState_ElapsedTime:
 InitState:	addi $sp, $sp, 4
 		sw $ra, 0($sp)
 		jal InitBoard			# get a new board
-		jal FindSol			# find solutions for board
+		jal solStart			# find solutions for board
 		la $t0, state_score
 		sw $0, 0($t0)			# Reset score to 0
 		la $t0, round_time
@@ -351,108 +350,93 @@ DspSol:		li $v0, 4
 		syscall
 		jr $ra
 
-FindSol:			#find solutions 
-		la	$s0, state_board	# s0 <- state_board	THIS IS THE REAL ARGUMENT NEEDED BY THIS ROUTINE
-		la	$s1, gridChars		# s1 <- gridChars
-		la	$s2, temp		# s2 <- temp
-		la	$s3, solution		# s3 <- write pointer into solution array
-	
-						# populate the gridChars array which keeps track of the occurrences of each char in grid
-		li	$t0, 0			# counter
-	FindSol_Prep:	
-		beq	$t0, 9, FindSol_Cont	# if looped thru grid, then continue
-		add	$t1, $s0, $t0		# address to a char in grid in t1
-		lb	$t2, ($t1)		# get the actual char in t2
-		sub	$t2, $t2, 97		# offset to the corresponding char in gridChars in t2
-		add	$t3, $s1, $t2		# get corresponding index in gridChars in t3
-		lb	$t4, ($t3)		# get that char count (initially zero)
-		addi	$t4, $t4, 1		# increase count by 1
-		sb	$t4, ($t3)		# store new count back
-		addi	$t0, $t0, 1		# incre counter
-		j FindSol_Prep
+solStart:	la	$s0, state_board	# s0 <- grid	THIS IS THE REAL ARGUMENT NEEDED BY THIS ROUTINE
+		la	$s1, sol_gridChars	# s1 <- sol_gridChars
+		la	$s2, sol_temp	# s2 <- sol_temp
+		la	$s3, solution	# s3 <- write pointer into solution array
 
-						# get dictionary name	
-	FindSol_Cont:	
-		lb	$t1, 4($s0)		# put central char in t1
-		la	$t0, file		# file name in t0
-		sb	$t1, ($t0)		# overwrite first char; now we have the file name needed
+# populate the sol_gridChars array which keeps track of the occurrences of each char in grid
+		li	$t0, 0		# counter
+solPrep:	beq	$t0, 9, solCont	# if looped thru grid, then continue
+		add	$t1, $s0, $t0	# address to a char in grid in t1
+		lb	$t2, ($t1)	# get the actual char in t2
+		sub	$t2, $t2, 97	# offset to the corresponding char in sol_gridChars in t2
+		add	$t3, $s1, $t2	# get corresponding index in sol_gridChars in t3
+		lb	$t4, ($t3)	# get that char count (initially zero)
+		addi	$t4, $t4, 1	# increase count by 1
+		sb	$t4, ($t3)	# store new count back
+		addi	$t0, $t0, 1	# incre counter
+		j solPrep
 
-						# open file
-	FindSol_Open:		
-		li	$v0, 13			# open file syscall
-		la	$a0, file		# load file name
-		li	$a1, 0			# read-only flag
-		li	$a2, 0			# (ignored)
+# get dictionary name
+solCont:	lb	$t1, 4($s0)	# put central char in t1
+		la	$t0, sol_file	# sol_file name in t0
+		sb	$t1, ($t0)	# overwrite first char; now we have the sol_file name needed
+
+# open sol_file
+solOpen:	li	$v0, 13		# open sol_file syscall
+		la	$a0, sol_file	# load sol_file name
+		li	$a1, 0		# read-only flag
+		li	$a2, 0		# (ignored)
 		syscall
-		move	$t6, $v0		# save file descriptor to t6; no error checking bc laziness
-	
+		move	$t6, $v0	# save sol_file descriptor to t6; no error checking bc laziness
+
 		# get ready to read data
-		move	$a0, $t6		# load file descriptor
-		la	$a1, buffer		# load buffer address
-		li	$a2, 10			# buffer size = 10
-		
-		li	$t8, 0			# count number of lines for debugging
-		li	$t9, 0			# count number of solutions
- 
-						# read data
-	FindSol_Read:	
-		li	$v0, 14			# read file syscall (have to manually reset everytime)
-		syscall				# stuff read in buffer
-		lb	$t1, ($a1)		# get first char of buffer
-		beq	$t1, 3, FindSol_Done	# if buffer is end-of-text, done; else check this entry for validity
+		move	$a0, $t6	# load sol_file descriptor
+		la	$a1, sol_buffer	# load sol_buffer address
+		li	$a2, 10		# sol_buffer size = 10
 
-						# re-initialize the temp array before checking	
+		li	$t8, 0		# count number of lines for debugging
+		li	$t9, 0		# count number of solutions
+
+# read data
+solRead:	li	$v0, 14		# read sol_file syscall (have to manually reset everytime)
+		syscall			# stuff read in sol_buffer
+		lb	$t1, ($a1)	# get first char of sol_buffer
+		beq	$t1, 3, solDone	# if sol_buffer is end-of-text, done; else check this entry for validity
+
+# re-initialize the sol_temp array before checking
 		li	$t0, 0
-	FindSol_Init:	
-		beq	$t0, 26, FindSol_CheckInit	# if looped thru gridChars, then move onto checking
-		add	$t1, $s1, $t0		# pointer to a char in gridChars in t1
-		add	$t2, $s2, $t0		# pointer to a char in temp in t2
-		lb	$t3, ($t1)		# get char from t1
-		sb	$t3, ($t2)		# store it to t2
-		addi	$t0, $t0, 1		# incre counter	
-		j FindSol_Init	
+solInit:	beq	$t0, 26, solCheckInit	# if looped thru sol_gridChars, then move onto checking
+		add	$t1, $s1, $t0	# pointer to a char in sol_gridChars in t1
+		add	$t2, $s2, $t0	# pointer to a char in sol_temp in t2
+		lb	$t3, ($t1)	# get char from t1
+		sb	$t3, ($t2)	# store it to t2
+		addi	$t0, $t0, 1	# incre counter
+		j solInit
 
-						# check for validity of an entry
-	FindSol_CheckInit:	
-		move $t0, $a1			# make a copy of a1 (buffer address) in t0
-	FindSol_Check:		
-		lb	$t1, ($t0)		# get a char of buffer
-		beq	$t1, 0, FindSol_CopyInit	# if null, this entry is valid (otherwise we would have broken the loop)
-		sub	$t1, $t1, 97		# offset to the corresponding entry in temp
-		add	$t1, $t1, $s2		# get actual address in temp into t1
-		lb	$t2, ($t1)		# load that char count
-		subi	$t2, $t2, 1		# minus one count for that char
-		blt	$t2, 0, FindSol_Moveon	# if the count drops below zero, bad entry, break (move on)
-		sb	$t2, ($t1)		# store the new count back
-		addi	$t0, $t0, 1		# move over one char
-		j FindSol_Check
+# check for validity of an entry
+solCheckInit:	move $t0, $a1	# make a copy of a1 (sol_buffer address) in t0
+solCheck:	lb	$t1, ($t0)	# get a char of sol_buffer
+		beq	$t1, 0, solCopyInit	# if null, this entry is valid (otherwise we would have broken the loop)
+		sub	$t1, $t1, 97	# offset to the corresponding entry in sol_temp
+		add	$t1, $t1, $s2	# get actual address in sol_temp into t1
+		lb	$t2, ($t1)	# load that char count
+		subi	$t2, $t2, 1	# minus one count for that char
+		blt	$t2, 0, solMoveon	# if the count drops below zero, bad entry, break (move on)
+		sb	$t2, ($t1)	# store the new count back
+		addi	$t0, $t0, 1	# move over one char
+		j solCheck
 
-						# by now the entry in buffer is valid and needs to be copied to solution set
-	FindSol_CopyInit:	
-		move	$t1, $a1		# copy a1 (buffer address) in t1
-		move	$t3, $s3		# copy $s3 (pointer into solution set array) in t3
-	FindSol_Copy:	
-		lb	$t4, ($t1)		# get a char from buffer to t4
-		beq	$t4, 0, FindSol_CopyDone	# if finished copying entire buffer
-		sb	$t4, ($t3)		# else store it to t3 (solution)
-		addi	$t1, $t1, 1		# incre pointer in buffer
-		addi	$t3, $t3, 1		# incre pointer in solution
-		j FindSol_Copy
-	FindSol_CopyDone:	
-		addi	$s3, $s3, 10		# seek 10 forward in solution array
-		addi	$t9, $t9, 1		# incre solution count
-	FindSol_Moveon:	
-		addi	$t8, $t8, 1		# incre line count
-		j FindSol_Read			# keep reading
- 
-	FindSol_Done:	
-		li	$v0, 16			# close file syscall
-		move	$a0, $t6		# load file descriptor
+# by now the entry in sol_buffer is valid and needs to be copied to solution set
+solCopyInit:	move	$t1, $a1	# copy a1 (sol_buffer address) in t1
+		move	$t3, $s3	# copy $s3 (pointer into solution set array) in t3
+solCopy:	lb	$t4, ($t1)	# get a char from sol_buffer to t4
+		beq	$t4, 0, solCopyDone	# if finished copying entire sol_buffer
+		sb	$t4, ($t3)	# else store it to t3 (solution)
+		addi	$t1, $t1, 1	# incre pointer in sol_buffer
+		addi	$t3, $t3, 1	# incre pointer in solution
+		j solCopy
+solCopyDone:	addi	$s3, $s3, 10	# seek 10 forward in solution array
+		addi	$t9, $t9, 1	# incre solution count
+solMoveon:	addi	$t8, $t8, 1	# incre line count
+		j solRead			# keep reading
+
+solDone:	li	$v0, 16		# close sol_file syscall
+		move	$a0, $t6	# load sol_file descriptor
 		syscall
-	
-		la	$a0, solution		# copy solution set address
-		
-		la 	$t0, numSol		#added by braden to store the number of solutions in memory and return
-		sw	$t9, 0($t0)
-		jr $ra
 
+		la	$a0, solution	# copy solution set address
+		move	$a1, $t9	# copy number of solutions
+
+		jr $ra
