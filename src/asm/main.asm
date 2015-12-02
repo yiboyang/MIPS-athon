@@ -17,7 +17,7 @@ sol_gridChars:	.space 26		# boolean array keeping track of which chars are prese
 sol_temp:	.space 26	# sol_temporary copy of sol_gridChars; reinitailized to sol_gridChars each round
 sol_buffer: .space 10	# use sol_buffer size that is the size of an entry
 sol_file:	.asciiz	"?.txt"	# the "?" is just a placeholder for a char to be overwritten
-solution: .space 3000	# assume max 300 solution entries (each has length 10 including null char)
+sol_solution: .space 3000	# assume max 300 solution entries (each has length 10 including null char)
 
 prompt_buf:	.byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
@@ -353,7 +353,7 @@ DspSol:		li $v0, 4
 solStart:	la	$s0, state_board	# s0 <- grid	THIS IS THE REAL ARGUMENT NEEDED BY THIS ROUTINE
 		la	$s1, sol_gridChars	# s1 <- sol_gridChars
 		la	$s2, sol_temp	# s2 <- sol_temp
-		la	$s3, solution	# s3 <- write pointer into solution array
+		la	$s3, sol_solution	# s3 <- write pointer into solution array
 
 # populate the sol_gridChars array which keeps track of the occurrences of each char in grid
 		li	$t0, 0		# counter
@@ -436,7 +436,7 @@ solDone:	li	$v0, 16		# close sol_file syscall
 		move	$a0, $t6	# load sol_file descriptor
 		syscall
 
-		la	$a0, solution	# copy solution set address
+		la	$a0, sol_solution	# copy solution set address
 		move	$a1, $t9	# copy number of solutions
 
 		jr $ra
