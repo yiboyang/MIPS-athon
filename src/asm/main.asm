@@ -162,7 +162,7 @@ UpdateState_ElapsedTime:
 ###
 InitState:	addi $sp, $sp, 4
 		sw $ra, 0($sp)
-InitState_restart:	
+InitState_restart:
 		jal InitBoard			# get a new board
 		jal solStart			# find solutions for board
 		beq $a1, $zero, InitState_restart
@@ -196,11 +196,11 @@ validateWord:   addi $sp, $sp, 4
 		addi $t8, $zero, 0	#to store the number of strings in solution set
 		la $t8, sol_num
 		lw $t9, ($t8)		#number of strings in the sol_set
-		
-		la $t1, sol_solution	 # address of the sol_solution		
+
+		la $t1, sol_solution	 # address of the sol_solution
 		addi $s5, $t1, 0
-		
-Outer:		ble $t9, $zero, else1	
+
+Outer:		ble $t9, $zero, else1
 		addi $a0, $t7, 0 	#$a0 contains address of normalized string
 		addi $a1, $s5, 0	#$a1 contains address of solution set
 		jal CompStr
@@ -208,11 +208,11 @@ Outer:		ble $t9, $zero, else1
 		addi $s5, $s5, 10
 		addi $t9, $t9, -1
 		j Outer
-	
-		
+
+
 else1:		li $v0, 0
 		#addi $v1, $a1, 0
-		j exitFind		
+		j exitFind
 
 foundIt: 	li $v0, 1
 
@@ -222,19 +222,19 @@ findClear:	lb $t5, 0($s5)
 		sb $t4, 0($s5)
 		addi $s5, $s5, 1
 		j findClear
-						
+
 exitFind: 	lw $ra, 0($sp)
 		addi $sp, $sp, -4
 		jr $ra
 
-		
+
 
 ###
 # Scores a user input word
 # Word@($a0) -> Points@$v0
 # CURRENTLY STUB
 ###
-ScoreWord:	
+ScoreWord:
 #		li $v0, 4
 #		.data
 #ScoreWord_tag:	.asciiz "<Stub Method Called> ScoreWord\n"
@@ -252,53 +252,52 @@ ScoreWord:
 #input: $a0 = address of string
 #returns string length in $v0
 ###
-loopLength: addi $t2, $zero, 0
-	    addi $t2, $a0, 0
-	    addi $t1, $zero,0
-loop:	    lb $t3, 0($t2)
-	    beq $t3, $zero, exit
-	    addi $t1, $t1, 1
-	    addi $t2, $t2, 1
-	    j loop
-	   
-exit:	    addi $v0, $t1, 0
-	    jr $ra
+loopLength: 	addi $t2, $zero, 0
+		addi $t2, $a0, 0
+		addi $t1, $zero,0
+loop:	    	lb $t3, 0($t2)
+		beq $t3, $zero, exit
+		addi $t1, $t1, 1
+		addi $t2, $t2, 1
+		j loop
+
+exit:		addi $v0, $t1, 0
+		jr $ra
 ####
 #input: $a0 = address of the string
 #returns the normalized string address in $v0
-#### 	    
+####
 normalization:
-la $t5, word5
-addi $t6, $t5, 0 #to return the pointer to the first character
-addi $t1, $zero, 0 #to contain the length
-addi $t2, $a0, 0 #pointer to the first character of word2
+		la $t5, word5
+		addi $t6, $t5, 0 #to return the pointer to the first character
+		addi $t1, $zero, 0 #to contain the length
+		addi $t2, $a0, 0 #pointer to the first character of word2
 
-toLowerCase: lb $t4, 0($t2)
-	     beq $t4, $zero, exit2
-	     beq $t4, 32 , removeSpace
-	     bge $t4, 97, noChange
-	     ble $t4, 90, goChange
-	      
+toLowerCase: 	lb $t4, 0($t2)
+		beq $t4, $zero, exit2
+		beq $t4, 32 , removeSpace
+		bge $t4, 97, noChange
+		ble $t4, 90, goChange
 
-removeSpace: addi $t2, $t2, 1
-	     j toLowerCase
+removeSpace: 	addi $t2, $t2, 1
+		j toLowerCase
 
-goChange: addi $t4, $t4, 32
-	  sb $t4, ($t5)
-	  addi $t5, $t5, 1
-	  addi $t2, $t2, 1
-	  j toLowerCase
-	  
-noChange: sb $t4, ($t5)
-	  addi $t5, $t5, 1
-	  addi $t2, $t2, 1
-	  j toLowerCase	  		
+goChange: 	addi $t4, $t4, 32
+		sb $t4, ($t5)
+		addi $t5, $t5, 1
+		addi $t2, $t2, 1
+		j toLowerCase
 
-exit2:	sb $t4, ($t5)
-	move $v0, $t6
-	jr $ra
-	
-	    
+noChange: 	sb $t4, ($t5)
+		addi $t5, $t5, 1
+		addi $t2, $t2, 1
+		j toLowerCase
+
+exit2:		sb $t4, ($t5)
+		move $v0, $t6
+		jr $ra
+
+
 
 
 ###
@@ -490,7 +489,7 @@ solClearGridChars:	beq	$t0, 26, solClearSolutionInit
 		sb	$zero, ($t1)	# clear to zero
 		addi	$t0, $t0, 1	# incre counter
 		j	solClearGridChars
-		
+
 solClearSolutionInit:	li	$t0, 0
 solClearSolution:	beq	$t0, 3000, solPrepInit
 		add	$t1, $s3, $t0	# pointer to a char in sol_solution in t1
@@ -583,5 +582,5 @@ solDone:	li	$v0, 16		# close sol_file syscall
 		la 	$t0, sol_num	# store number of solutions
 		sw	$t9, ($t0)
 		move	$a1, $t9	# copy number of solutions
-		
+
 		jr $ra
