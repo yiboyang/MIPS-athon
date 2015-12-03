@@ -106,5 +106,18 @@ solDone:	li	$v0, 16		# close file syscall
 	la	$a0, solution	# copy solution set address
 	move	$a1, $t9	# copy number of solutions
 	
-	li	$v0, 10		# exit syscall; optional
+	li	$t0,0
+	move	$t1, $a0
+solPrint:	beq	$t0,$a1,solFinish
+	move	$a0,$t1
+	li	$v0, 4	# for print string
+	syscall
+	li	$v0,11		# print char
+	li	$a0,0x0a	# newline
+	syscall
+	addi	$t1,$t1,10
+	addi	$t0,$t0,1
+	j solPrint
+	
+solFinish:	li	$v0, 10		# exit syscall; optional
 	syscall

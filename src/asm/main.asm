@@ -340,7 +340,20 @@ DspResult:	li $v0, 4
 ###
 # Display solutions
 # none -> none
-# CURRENTLY STUB
+DspSol:	li	$t0,0
+	la	$t1, solution
+solPrint:	beq	$t0,$a1,solPrintDone
+	move	$a0,$t1
+	li	$v0, 4	# for print string
+	syscall
+	li	$v0,11		# print char
+	li	$a0,0x0a	# newline
+	syscall
+	addi	$t1,$t1,10
+	addi	$t0,$t0,1
+	j solPrint
+solPrintDone: jr	$ra
+
 ###
 		.data
 DspSol_tag:	.asciiz "<Stub Method Called> DspSol\n"
