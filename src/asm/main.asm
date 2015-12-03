@@ -19,6 +19,7 @@ sol_buffer: 	.space 10	# use sol_buffer size that is the size of an entry
 sol_file:	.asciiz	"?.txt"	# the "?" is just a placeholder for a char to be overwritten
 sol_solution: .space 3000	# assume max 300 solution entries (each has length 10 including null char)
 sol_num:	.word 0
+word5: 		.space 1000
 
 
 prompt_buf:	.byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
@@ -195,6 +196,58 @@ ScoreWord:
 		div $t0, $t0, $t1		# divide time remaining by number of solutions
 		add $v0, $t0, $zero		# return score to add
 		jr $ra
+
+### Length of the string
+#input: $a0 = address of string
+###
+loopLength: addi $t2, $zero, 0
+	    addi $t2, $a0, 0
+	    addi $t1, $zero,0
+loop:	    lb $t3, 0($t2)
+	    beq $t3, $zero, exit
+	    addi $t1, $t1, 1
+	    addi $t2, $t2, 1
+	    j loop
+	   
+exit:	    addi $v0, $t1, 0
+	    jr $ra
+####
+#input: $a0 = address of the string
+#returns the normalized string address in $v0
+#### 	    
+normalization:
+la $t5, word5
+addi $t6, $t5, 0 #to return the pointer to the first character
+addi $t1, $zero, 0 #to contain the length
+addi $t2, $a0, 0 #pointer to the first character of word2
+
+toLowerCase: lb $t4, 0($t2)
+	     beq $t4, $zero, exit2
+	     beq $t4, 32 , removeSpace
+	     bge $t4, 97, noChange
+	     ble $t4, 90, goChange
+	      
+
+removeSpace: addi $t2, $t2, 1
+	     j toLowerCase
+
+goChange: addi $t4, $t4, 32
+	  sb $t4, ($t5)
+	  addi $t5, $t5, 1
+	  addi $t2, $t2, 1
+	  j toLowerCase
+	  
+noChange: sb $t4, ($t5)
+	  addi $t5, $t5, 1
+	  addi $t2, $t2, 1
+	  j toLowerCase	  		
+
+exit2:	sb $t4, ($t5)
+	move $v0, $t6
+	jr $ra
+	
+	    
+
 
 ###
 # Display the current state of the game
