@@ -184,8 +184,8 @@ validateWord:   addi $sp, $sp, 4
 		sw $ra, 0($sp)
 
 		addi $t7, $a0, 0 # the address of the string to be compared
-		#jal normalization
-		#move $t7, $v0	#$t7 contains address of normalized string
+		jal normalization
+		move $t7, $v0	#$t7 contains address of normalized string
 		addi $a0, $t7, 0	#to call loopLength
 		li $v0, 4
 		syscall
