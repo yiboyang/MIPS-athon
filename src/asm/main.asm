@@ -225,6 +225,7 @@ findClear:	lb $t5, 0($s5)
 
 exitFind: 	lw $ra, 0($sp)
 		addi $sp, $sp, -4
+
 		beq $v0, 1, goodSound
 		li	$a0, 32
 		li	$a1, 5000
@@ -260,7 +261,6 @@ ScoreWord:
 		lw $t1, sol_num			# load number of solutions
 		div $t0, $t0, $t1		# divide time remaining by number of solutions
 		add $v0, $t0, $zero		# return score to add
-
 		jr $ra
 
 ### Length of the string
