@@ -2,7 +2,7 @@
 sol_gridChars:	.space 26		# boolean array keeping track of which chars are present in grid
 sol_temp:	.space 26	# sol_temporary copy of sol_gridChars; reinitailized to sol_gridChars each round
 sol_buffer: 	.space 10	# use sol_buffer size that is the size of an entry
-sol_file:	.asciiz	"?.txt"	# the "?" is just a placeholder for a char to be overwritten
+sol_file:	.asciiz	"include/?.txt"	# the "?" is just a placeholder for a char to be overwritten
 sol_num:	.word 0
 sol_solution: .space 3000	# assume max 300 solution entries (each has length 10 including null char)
 
@@ -249,7 +249,7 @@ ScoreWord:
 # $a0 = pitch (0-127)
 # $a1 = duration in milliseconds
 # $a2 = instrument (0-127)
-# $a3 = volume (0-127)	
+# $a3 = volume (0-127)
 playSound:	li	$a0,32
 		li	$a1, 10000
 		li	$a2, 100
@@ -529,7 +529,7 @@ solPrep:	beq	$t0, 9, solCont	# if looped thru grid, then continue
 # get dictionary name
 solCont:	lb	$t1, 4($s0)	# put central char in t1
 		la	$t0, sol_file	# sol_file name in t0
-		sb	$t1, ($t0)	# overwrite first char; now we have the sol_file name needed
+		sb	$t1, 8($t0)	# overwrite ? char; now we have the sol_file name needed
 
 # open sol_file
 solOpen:	li	$v0, 13		# open sol_file syscall
