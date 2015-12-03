@@ -13,9 +13,9 @@ words possible.  In addition, for each correct word you will be given an
 additional 20 seconds.
 
 How to:
-To use the program, first make sure that all provided dictionary files are in
-the same directory as MARS, once that is accomplished simply assemble and run
-the program.
+To use the program, start mars in the folder that contains the project. Open
+and run "src/asm/main.asm". Make sure that the dictionary files are in the
+"include" directory relative to the place where mars is started.
 
 To play the game, enter "start" when prompted to do so, then a new round will
 start and you can start entering words.  Once you have found all the words you
