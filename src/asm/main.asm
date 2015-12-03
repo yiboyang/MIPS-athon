@@ -15,9 +15,11 @@ round_time:	.word 30000
 
 sol_gridChars:	.space 26		# boolean array keeping track of which chars are present in grid
 sol_temp:	.space 26	# sol_temporary copy of sol_gridChars; reinitailized to sol_gridChars each round
-sol_buffer: .space 10	# use sol_buffer size that is the size of an entry
+sol_buffer: 	.space 10	# use sol_buffer size that is the size of an entry
 sol_file:	.asciiz	"?.txt"	# the "?" is just a placeholder for a char to be overwritten
-solution: .space 3000	# assume max 300 solution entries (each has length 10 including null char)
+sol_solution: .space 3000	# assume max 300 solution entries (each has length 10 including null char)
+sol_num:	.word 0
+
 
 prompt_buf:	.byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
@@ -178,13 +180,18 @@ InitState:	addi $sp, $sp, 4
 # Word@($a0) -> Points@$v0
 # CURRENTLY STUB
 ###
-ScoreWord:	li $v0, 4
-		.data
-ScoreWord_tag:	.asciiz "<Stub Method Called> ScoreWord\n"
-		.text
-		la $a0, ScoreWord_tag
-		syscall
-		li $v0, 1
+ScoreWord:	
+#		li $v0, 4
+#		.data
+#ScoreWord_tag:	.asciiz "<Stub Method Called> ScoreWord\n"
+#		.text
+#		la $a0, ScoreWord_tag
+#		syscall
+#		li $v0, 1
+		la $t0, state_RemTime		# load time remaining
+		la $t1, sol_num			# load number of solutions
+		div $t0, $t0, $t1		# divide time remaining by number of solutions
+		add $v0, $t0, $zero		# return score to add
 		jr $ra
 
 ###
@@ -366,7 +373,7 @@ DspSol:		li $v0, 4
 solStart:	la	$s0, state_board	# s0 <- grid	THIS IS THE REAL ARGUMENT NEEDED BY THIS ROUTINE
 		la	$s1, sol_gridChars	# s1 <- sol_gridChars
 		la	$s2, sol_temp	# s2 <- sol_temp
-		la	$s3, solution	# s3 <- write pointer into solution array
+		la	$s3, sol_solution	# s3 <- write pointer into solution array
 
 # populate the sol_gridChars array which keeps track of the occurrences of each char in grid
 		li	$t0, 0		# counter
@@ -450,6 +457,9 @@ solDone:	li	$v0, 16		# close sol_file syscall
 		syscall
 
 		la	$a0, solution	# copy solution set address
-		move	$a1, $t9	# copy number of solutions
+		la 	$t0, sol_num	# store number of solutions
+		sw	$t9, ($t0)
+		#move	$a1, $t9	# copy number of solutions
+
 
 		jr $ra
