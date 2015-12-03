@@ -14,6 +14,7 @@ temp:	.space 26	# temporary copy of gridChars; reinitailized to gridChars each r
 buffer: .space 10	# use buffer size that is the size of an entry
 file:	.asciiz	"?.txt"	# the "?" is just a placeholder for a char to be overwritten
 solution: .space 3000	# assume max 300 solution entries (each has length 10 including null char)
+numSol:	.word 0		#number of solutions
 
 		.text
 FindSol:			#find solutions 
@@ -114,7 +115,10 @@ FindSol_CopyInit:	move	$t1, $a1	# copy a1 (buffer address) in t1
 		syscall
 	
 		la	$a0, solution	# copy solution set address
-		move	$a1, $t9	# copy number of solutions
+		
+		la 	$t0, numSol	#added by braden to store the number of solutions in memory and return
+		sw	$t9, (t0)
+		jr $ra
 	
-		li	$v0, 10		# exit syscall; optional
-		syscall
+		#li	$v0, 10		# exit syscall; optional
+		#syscall
