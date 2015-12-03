@@ -180,13 +180,18 @@ InitState:	addi $sp, $sp, 4
 # Word@($a0) -> Points@$v0
 # CURRENTLY STUB
 ###
-ScoreWord:	li $v0, 4
-		.data
-ScoreWord_tag:	.asciiz "<Stub Method Called> ScoreWord\n"
-		.text
-		la $a0, ScoreWord_tag
-		syscall
-		li $v0, 1
+ScoreWord:	
+#		li $v0, 4
+#		.data
+#ScoreWord_tag:	.asciiz "<Stub Method Called> ScoreWord\n"
+#		.text
+#		la $a0, ScoreWord_tag
+#		syscall
+#		li $v0, 1
+		la $t0, state_RemTime		# load time remaining
+		la $t1, sol_num			# load number of solutions
+		div $t0, $t0, $t1		# divide time remaining by number of solutions
+		add $v0, $t0, $zero		# return score to add
 		jr $ra
 
 ###
