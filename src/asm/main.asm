@@ -352,18 +352,18 @@ DspResult:	li $v0, 4
 DspSol:	li	$v0,11		# print char
 	li	$a0,0x0a	# newline
 	syscall
-	li	$t0,0
+	li	$t0, 0
 	la	$t1, sol_solution
 	lw	$t3, sol_num
-solPrint:	beq	$t0,$t3,solPrintDone
-	move	$a0,$t1
+solPrint:	beq	$t0, $t3, solPrintDone
+	move	$a0, $t1
 	li	$v0, 4	# for print string
 	syscall
-	li	$v0,11		# print char
-	li	$a0,0x2c	# newline
+	li	$v0, 11		# print char
+	li	$a0, 0x2c	# comma
 	syscall
-	addi	$t1,$t1,10
-	addi	$t0,$t0,1
+	addi	$t1, $t1, 10
+	addi	$t0, $t0, 1
 	j solPrint
 solPrintDone: jr	$ra
 
@@ -459,6 +459,5 @@ solDone:	li	$v0, 16		# close sol_file syscall
 		la 	$t0, sol_num	# store number of solutions
 		sw	$t9, ($t0)
 		#move	$a1, $t9	# copy number of solutions
-
 
 		jr $ra
