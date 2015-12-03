@@ -25,3 +25,7 @@ words that you did not find.  From there, you may either enter "start" to begin
 a new round, or "exit" if you wish to end the program.
 
 Limitations:
+This variant of Lexathon produces boards that do not have repeated letters.
+This makes the solution sets much smaller and the words harder to find. MARS
+also appears to have an issue with repeated file IO, so it is suggested to
+restart MARS if the board initialization is taking too long.
