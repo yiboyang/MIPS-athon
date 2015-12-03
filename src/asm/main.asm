@@ -371,7 +371,7 @@ solPrintDone: jr	$ra
 
 ###
 # Find solutions
-# state_board -> sol_solution, sol_num
+# state_board -> sol_solution ($a0), sol_num ($a1)
 ###
 solStart:	la	$s0, state_board	# s0 <- grid	THIS IS THE REAL ARGUMENT NEEDED BY THIS ROUTINE
 		la	$s1, sol_gridChars	# s1 <- sol_gridChars
@@ -477,6 +477,6 @@ solDone:	li	$v0, 16		# close sol_file syscall
 		la	$a0, sol_solution	# copy solution set address
 		la 	$t0, sol_num	# store number of solutions
 		sw	$t9, ($t0)
-		#move	$a1, $t9	# copy number of solutions
-
+		move	$a1, $t9	# copy number of solutions
+		
 		jr $ra
