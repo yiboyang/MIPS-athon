@@ -347,28 +347,25 @@ DspResult:	li $v0, 4
 ###
 # Display solutions
 # none -> none
-DspSol:	li	$t0,0
-	la	$t1, solution
-solPrint:	beq	$t0,$a1,solPrintDone
+DspSol:	li	$v0,11		# print char
+	li	$a0,0x0a	# newline
+	syscall
+	li	$t0,0
+	la	$t1, sol_solution
+	lw	$t3, sol_num
+solPrint:	beq	$t0,$t3,solPrintDone
 	move	$a0,$t1
 	li	$v0, 4	# for print string
 	syscall
 	li	$v0,11		# print char
-	li	$a0,0x0a	# newline
+	li	$a0,0x2c	# newline
 	syscall
 	addi	$t1,$t1,10
 	addi	$t0,$t0,1
 	j solPrint
 solPrintDone: jr	$ra
 
-###
-		.data
-DspSol_tag:	.asciiz "<Stub Method Called> DspSol\n"
-		.text
-DspSol:		li $v0, 4
-		la $a0, DspSol_tag
-		syscall
-		jr $ra
+
 
 solStart:	la	$s0, state_board	# s0 <- grid	THIS IS THE REAL ARGUMENT NEEDED BY THIS ROUTINE
 		la	$s1, sol_gridChars	# s1 <- sol_gridChars
@@ -456,7 +453,7 @@ solDone:	li	$v0, 16		# close sol_file syscall
 		move	$a0, $t6	# load sol_file descriptor
 		syscall
 
-		la	$a0, solution	# copy solution set address
+		la	$a0, sol_solution	# copy solution set address
 		la 	$t0, sol_num	# store number of solutions
 		sw	$t9, ($t0)
 		#move	$a1, $t9	# copy number of solutions
