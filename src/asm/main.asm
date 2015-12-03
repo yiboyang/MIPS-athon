@@ -104,9 +104,10 @@ Round:		la $a0, round_msg
 		la $a1, exit_request		#checks if user is exiting early
 		jal CompStr
 		beq $v0, $zero, EndRound
-
+		jal validateWord
+		beq $v0, 0, noScore
 		jal ScoreWord			# score the word
-		move $t0, $v0			# sol_temp save score
+noScore:	move $t0, $v0			# temp save score
 		bne $v0, $0, Round_Upd		# Check if score is 0
 		la $a0, round_err
 		li $v0, 4
@@ -178,6 +179,53 @@ InitState_restart:
 		lw $ra, 0($sp)
 		jr $ra
 
+validateWord:   addi $sp, $sp, 4
+		sw $ra, 0($sp)
+
+		addi $t0, $a0, 0 # the address of the string to be compared
+		jal normalization
+		move $t7, $v0	#$t7 contains address of normalized string
+		addi $a0, $t7, 0	#to call loopLength
+		jal loopLength
+		move $t6, $v0	# to contain the length of normalized string
+		bge $t6, 10, else1
+ 		ble $t6, 3, else1
+		addi $t8, $zero, 0	#to store the number of strings in solution set
+		la $t8, sol_num
+		lw $t9, ($t8)		#number of strings in the sol_set
+		
+		la $t1, sol_solution	 # address of the sol_solution		
+		addi $s5, $t1, 0
+		
+Outer:		ble $t9, $zero, else1	
+		addi $a0, $t7, 0 	#$a0 contains address of normalized string
+		addi $a1, $s5, 0	#$a1 contains address of solution set
+		jal CompStr
+		beq $v0, 0, foundIt
+		addi $s5, $s5, 10
+		addi $t9, $t9, -1
+		j Outer
+	
+		
+else1:		li $v0, 0
+		#addi $v1, $a1, 0
+		j exitFind		
+
+foundIt: 	li $v0, 1
+
+findClear:	lb $t5, 0($s5)
+		beq $t5, $zero, exitFind
+		addi $t4, $zero, 0
+		sb $t4, 0($s5)
+		addi $s5, $s5, 1
+		j findClear
+						
+exitFind: 	lw $ra, 0($sp)
+		addi $sp, $sp, -4
+		jr $ra
+
+		
+
 ###
 # Scores a user input word
 # Word@($a0) -> Points@$v0
@@ -199,6 +247,7 @@ ScoreWord:
 
 ### Length of the string
 #input: $a0 = address of string
+#returns string length in $v0
 ###
 loopLength: addi $t2, $zero, 0
 	    addi $t2, $a0, 0
