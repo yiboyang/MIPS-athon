@@ -159,8 +159,10 @@ UpdateState_ElapsedTime:
 ###
 InitState:	addi $sp, $sp, 4
 		sw $ra, 0($sp)
+InitState_restart:	
 		jal InitBoard			# get a new board
 		jal solStart			# find solutions for board
+		beq $a1, $zero, InitState_restart
 		la $t0, state_score
 		sw $0, 0($t0)			# Reset score to 0
 		la $t0, round_time
