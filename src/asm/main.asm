@@ -349,6 +349,7 @@ DspResult:	li $v0, 4
 ###
 # Display solutions
 # none -> none
+###
 DspSol:	li	$v0,11		# print char
 	li	$a0,0x0a	# newline
 	syscall
@@ -368,14 +369,32 @@ solPrint:	beq	$t0, $t3, solPrintDone
 solPrintDone: jr	$ra
 
 
-
+###
+# Find solutions
+# state_board -> sol_solution, sol_num
+###
 solStart:	la	$s0, state_board	# s0 <- grid	THIS IS THE REAL ARGUMENT NEEDED BY THIS ROUTINE
 		la	$s1, sol_gridChars	# s1 <- sol_gridChars
 		la	$s2, sol_temp	# s2 <- sol_temp
 		la	$s3, sol_solution	# s3 <- write pointer into solution array
 
+# before we do anything, clear any possible leftover stuff from last round
+		li	$t0, 0
+solClearGridChars:	beq	$t0, 26, solClearSolutionInit
+		add	$t1, $s1, $t0	# pointer to a char in sol_gridChars in t1
+		sb	$zero, ($t1)	# clear to zero
+		addi	$t0, $t0, 1	# incre counter
+		j	solClearGridChars
+		
+solClearSolutionInit:	li	$t0, 0
+solClearSolution:	beq	$t0, 3000, solPrepInit
+		add	$t1, $s3, $t0	# pointer to a char in sol_solution in t1
+		sb	$zero, ($t1)	# clear to zero
+		addi	$t0, $t0, 1	# incre counter
+		j	solClearSolution
+
 # populate the sol_gridChars array which keeps track of the occurrences of each char in grid
-		li	$t0, 0		# counter
+solPrepInit:	li	$t0, 0		# counter
 solPrep:	beq	$t0, 9, solCont	# if looped thru grid, then continue
 		add	$t1, $s0, $t0	# address to a char in grid in t1
 		lb	$t2, ($t1)	# get the actual char in t2
