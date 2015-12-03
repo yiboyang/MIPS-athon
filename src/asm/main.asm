@@ -187,8 +187,6 @@ validateWord:   addi $sp, $sp, 4
 		jal normalization
 		move $t7, $v0	#$t7 contains address of normalized string
 		addi $a0, $t7, 0	#to call loopLength
-		li $v0, 4
-		syscall
 		jal loopLength
 		move $t6, $v0	# to contain the length of normalized string
 		bge $t6, 10, else1
@@ -332,6 +330,10 @@ DspState_Tmsg:	.asciiz "\nTime Remaining: "
 		li $t1, 0
 		li $t2, 0
 		li $v0, 11			# syscode for printchar
+
+		li $a0, 10
+		syscall
+
 DspState_BrdLp: add $t4, $t0, $t1		# $t4 has address into board array
 		lb $a0, 0($t4)			# $a0 has byte at $t4
 		syscall				# print char
