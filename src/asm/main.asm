@@ -223,7 +223,7 @@ findClear:	lb $t5, 0($s5)
 
 exitFind: 	lw $ra, 0($sp)
 		addi $sp, $sp, -4
-
+		move	$t9, $v0
 		beq $v0, 1, goodSound
 		li	$a0, 32
 		li	$a1, 5000
@@ -231,14 +231,16 @@ exitFind: 	lw $ra, 0($sp)
 		li	$a3, 127
 		li	$v0, 31
 		syscall
+		move	$v0, $t9
+		jr	$ra
 goodSound:	li	$a0, 64
 		li	$a1, 5000
 		li	$a2, 0
 		li	$a3, 127
 		li	$v0, 31
 		syscall
-
-		jr $ra
+		move	$v0, $t9
+		jr	$ra
 
 
 
