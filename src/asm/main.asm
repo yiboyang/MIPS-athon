@@ -242,8 +242,8 @@ ScoreWord:
 #		la $a0, ScoreWord_tag
 #		syscall
 #		li $v0, 1
-		la $t0, state_RemTime		# load time remaining
-		la $t1, sol_num			# load number of solutions
+		lw $t0, state_RemTime		# load time remaining
+		lw $t1, sol_num			# load number of solutions
 		div $t0, $t0, $t1		# divide time remaining by number of solutions
 		add $v0, $t0, $zero		# return score to add
 # play sound on success
