@@ -276,12 +276,17 @@ addi $t2, $a0, 0 #pointer to the first character of word2
 toLowerCase: lb $t4, 0($t2)
 	     beq $t4, $zero, exit2
 	     beq $t4, 32 , removeSpace
+		beq $t4, 10, removeNLFeed
 	     bge $t4, 97, noChange
 	     ble $t4, 90, goChange
 	      
 
 removeSpace: addi $t2, $t2, 1
 	     j toLowerCase
+
+removeNLFeed:
+		add $t4, $zero, $zero
+		j exit2
 
 goChange: addi $t4, $t4, 32
 	  sb $t4, ($t5)
