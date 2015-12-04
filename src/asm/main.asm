@@ -20,7 +20,7 @@ state_RemTime:	.word 0
 state_board:	.byte 0, 0, 0, 0, 0, 0, 0, 0, 0
 round_time:	.word 30000
 
-word5: 		.space 1000
+word5: 		.space 10
 
 
 prompt_buf:	.byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
@@ -183,10 +183,12 @@ InitState_restart:
 validateWord:   addi $sp, $sp, 4
 		sw $ra, 0($sp)
 
-		addi $t0, $a0, 0 # the address of the string to be compared
-		jal normalization
-		move $t7, $v0	#$t7 contains address of normalized string
+		addi $t7, $a0, 0 # the address of the string to be compared
+		#jal normalization
+		#move $t7, $v0	#$t7 contains address of normalized string
 		addi $a0, $t7, 0	#to call loopLength
+		li $v0, 4
+		syscall
 		jal loopLength
 		move $t6, $v0	# to contain the length of normalized string
 		bge $t6, 10, else1
