@@ -246,6 +246,18 @@ ScoreWord:
 		la $t1, sol_num			# load number of solutions
 		div $t0, $t0, $t1		# divide time remaining by number of solutions
 		add $v0, $t0, $zero		# return score to add
+# play sound on success
+# plays monotone only right now
+# $a0 = pitch (0-127)
+# $a1 = duration in milliseconds
+# $a2 = instrument (0-127)
+# $a3 = volume (0-127)	
+playSound:	li	$a0,32
+		li	$a1, 10000
+		li	$a2, 100
+		li	$a3, 127
+		li	$v0, 31
+		syscall
 		jr $ra
 
 ### Length of the string
